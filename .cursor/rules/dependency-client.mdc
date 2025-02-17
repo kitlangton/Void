@@ -1,0 +1,67 @@
+---
+description: How to create Swift Composable Architecture Dependency Clients
+globs: 
+---
+### **Composable Architecture Dependency Pattern with an Actor-Based Live Client**
+This pattern ensures **safe concurrency** and **testability** in The Composable Architecture (TCA) by using an **actor for the live implementation** of a dependency.
+
+---
+
+### **Pattern Format**
+1. **Define a Dependency Struct** (Encapsulates functionality)
+2. **Create a Live Client (Actor)** (Handles concurrency safely)
+3. **Extend with `DependencyKey`** (Provides live implementation)
+4. **Integrate with `DependencyValues`** (Enables easy access)
+5. **Use in a Reducer** (Inject and call dependency methods)
+
+---
+
+### **Example: API Client Dependency with an Actor**
+```swift
+import Dependencies
+
+// 1. Define the dependency
+struct APIClient {
+    var fetchData: (String) -> AsyncStream<String>
+}
+
+// 2. Live implementation as an Actor
+actor APIClientLive {
+    func fetchData(query: String) -> AsyncStream<String> {
+        AsyncStream { continuation in
+            Task {
+                for i in 1...3 {
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                    continuation.yield("Result \(i) for \(query)")
+                }
+                continuation.finish()
+            }
+        }
+    }
+}
+
+// 3. Extend with DependencyKey
+extension APIClient: DependencyKey {
+    static let liveValue = {
+        let liveClient = APIClientLive()
+        return Self(
+            fetchData: { query in await liveClient.fetchData(query: query) }
+        )
+    }()
+}
+
+// 4. Integrate into DependencyValues
+extension DependencyValues {
+    var apiClient: APIClient {
+        get { self[APIClient.self] }
+        set { self[APIClient.self] = newValue }
+    }
+}
+```
+
+### **Why Use an Actor?**
+- Ensures **safe concurrent access** to shared resources.
+- Prevents **data races** when handling async state.
+- Ideal for managing **long-running tasks** like API calls or streaming data.
+
+This approach keeps the dependency system **modular, scalable, and testable** in TCA. 🚀

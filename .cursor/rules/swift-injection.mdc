@@ -1,0 +1,7 @@
+---
+description: How to use Swift Inject
+globs: *.swift
+---
+Add `import Inject` to the top of every view file.
+Add `@ObserveInjection var inject` at the top of each view struct.
+Add `.enableInjection()` to the end of each view body.
