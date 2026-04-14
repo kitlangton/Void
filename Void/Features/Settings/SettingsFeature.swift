@@ -16,6 +16,12 @@ extension SharedKey where Self == InMemoryKey<SettingSection?>.Default {
 
 @Reducer
 struct SettingsReducer {
+  @Dependency(\.soundManager) var audioManager
+
+  enum CancelID: Hashable {
+    case ambient
+  }
+
   @ObservableState
   struct State {
     @Shared(.settings) var settings: VoidSettings
@@ -49,18 +55,7 @@ struct SettingsReducer {
       switch action {
       case let .select(section):
         state.$expandedSection.withLock { $0 = section }
-
-        if section != .ambient && !state.isActive {
-          Task { @MainActor in
-            AmbientManager.shared.stop()
-          }
-        } else if let ambience = state.settings.ambience {
-          Task { @MainActor in
-            AmbientManager.shared.play(ambience)
-          }
-        }
-
-        return .none
+        return syncAmbientPlayback(for: state)
 
       case let .setIntervalMinutes(interval):
         if interval == state.settings.intervalMinutes {
@@ -82,16 +77,9 @@ struct SettingsReducer {
         if ambience == state.settings.ambience {
           return .send(.select(nil))
         } else {
-          Task { @MainActor in
-            if let ambience = ambience {
-              AmbientManager.shared.play(ambience)
-            } else {
-              AmbientManager.shared.stop()
-            }
-          }
           state.$settings.ambience.withLock { $0 = ambience }
+          return syncAmbientPlayback(for: state)
         }
-        return .none
 
       case .binding:
         return .none
@@ -100,6 +88,17 @@ struct SettingsReducer {
         return .send(.select(nil))
       }
     }
+  }
+
+  private func syncAmbientPlayback(for state: State) -> Effect<Action> {
+    let ambient = state.isActive || state.expandedSection == .ambient
+      ? state.settings.ambience
+      : nil
+
+    return .run { _ in
+      await audioManager.setAmbient(ambient)
+    }
+    .cancellable(id: CancelID.ambient, cancelInFlight: true)
   }
 }
 

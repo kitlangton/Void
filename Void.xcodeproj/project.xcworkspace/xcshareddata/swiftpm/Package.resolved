@@ -1,5 +1,5 @@
 {
-  "originHash" : "46efbbadd68ead096bbca629eab11bce922e0dac803afd0a0eed17a15e09628f",
+  "originHash" : "4673e943ea680000dcd96ee9826dbc6e85fc996360a805866dfde880b5bc3622",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -11,9 +11,9 @@
       }
     },
     {
-      "identity" : "inject?tab=readme-ov-file",
+      "identity" : "inject",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/krzysztofzablocki/Inject?tab=readme-ov-file",
+      "location" : "https://github.com/krzysztofzablocki/Inject",
       "state" : {
         "revision" : "728c56639ecb3df441d51d5bc6747329afabcfc9",
         "version" : "1.5.2"
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-composable-architecture",
       "state" : {
-        "revision" : "2ebda6ae2b155a5c3d75aff5f6d25c024bc91311",
-        "version" : "1.17.1"
+        "revision" : "1eaa6fa2ee57ac42843283b9fd3457af408c858d",
+        "version" : "1.25.5"
       }
     },
     {
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-navigation",
       "state" : {
-        "revision" : "e28911721538fa0c2439e92320bad13e3200866f",
-        "version" : "2.2.3"
+        "revision" : "32f35241b8be0719c4c7f00eb27713b1cadb6248",
+        "version" : "2.8.0"
       }
     },
     {

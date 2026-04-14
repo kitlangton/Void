@@ -17,8 +17,7 @@ struct SoundManagerClient {
   var play: (_ sound: Sound) async -> Void
   var stop: (_ sound: Sound) async -> Void
   var stopAll: () async -> Void
-  var playAmbient: (_ sound: AmbientSound) async -> Void
-  var stopCurrentAmbient: () async -> Void
+  var setAmbient: (_ sound: AmbientSound?) async -> Void
   var preloadSounds: () async -> Void
 }
 
@@ -27,8 +26,7 @@ extension SoundManagerClient: DependencyKey {
     play: { _ in },
     stop: { _ in },
     stopAll: {},
-    playAmbient: { _ in },
-    stopCurrentAmbient: {},
+    setAmbient: { _ in },
     preloadSounds: {}
   )
 
@@ -39,8 +37,7 @@ extension SoundManagerClient: DependencyKey {
       play: { await live.play($0) },
       stop: { await live.stop($0) },
       stopAll: { await live.stopAll() },
-      playAmbient: { await live.playAmbient($0) },
-      stopCurrentAmbient: { await live.stopCurrentAmbient() },
+      setAmbient: { await live.setAmbient($0) },
       preloadSounds: { await live.preloadSounds() }
     )
   }
@@ -81,15 +78,15 @@ final actor SoundManagerLive {
 
   func stopAll() async {
     audioPlayers.values.forEach { $0.stop() }
-    await stopCurrentAmbient()
+    await setAmbient(nil)
   }
 
-  func playAmbient(_ sound: AmbientSound) async {
-    await ambientManager.play(sound)
-  }
-
-  func stopCurrentAmbient() async {
-    await ambientManager.stop()
+  func setAmbient(_ sound: AmbientSound?) async {
+    if let sound {
+      await ambientManager.play(sound)
+    } else {
+      await ambientManager.stop()
+    }
   }
 
   private var audioPlayers: [Sound: AVAudioPlayer] = [:]

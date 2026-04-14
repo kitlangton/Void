@@ -1,20 +1,20 @@
-import Combine
+import AVFoundation
 import Foundation
-import Inject
 import MediaPlayer
 import SwiftUI
 
 @MainActor
-class AmbientManager {
+final class AmbientManager {
   static let shared = AmbientManager()
 
+  private let audioSession = AVAudioSession.sharedInstance()
   private var players: [AmbientSound: AVAudioPlayer] = [:]
   private var fadeTimers: [AmbientSound: Timer] = [:]
   private var currentSound: AmbientSound?
   private var isPlaying: Bool = false
 
   init() {
-    setupAudioSession()
+    activateAudioSession()
     setupPlayers()
     setupRemoteCommandCenter()
     setupNotifications()
@@ -24,19 +24,27 @@ class AmbientManager {
     // If we're already playing this sound at full volume, do nothing
     if currentSound == sound,
        let player = players[sound],
-       //  player.volume == Float(MeditationSettings.shared.ambientVolume)
-       player.volume == 1
+       player.isPlaying,
+       player.volume >= 0.99
     {
       return
     }
 
+    activateAudioSession()
+
+    let previousSound = currentSound
+
     // If this isn't the current sound, fade out the current sound
-    if let oldSound = currentSound, oldSound != sound {
+    if let oldSound = previousSound, oldSound != sound {
       fadeOut(oldSound)
     }
 
     currentSound = sound
     isPlaying = true
+
+    if players[sound] == nil {
+      loadSound(sound)
+    }
 
     guard let player = players[sound] else { return }
 
@@ -65,6 +73,7 @@ class AmbientManager {
     }
 
     currentSound = nil
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
   }
 
   private func fadeIn(_ sound: AmbientSound) {
@@ -130,17 +139,33 @@ class AmbientManager {
     }
   }
 
-  private func setupAudioSession() {
+  private func activateAudioSession() {
     do {
-      try AVAudioSession.sharedInstance().setCategory(
-        .ambient,
+      try audioSession.setCategory(
+        .playback,
         mode: .default,
         options: [.mixWithOthers]
       )
-      try AVAudioSession.sharedInstance().setActive(true)
+      try audioSession.setActive(true)
     } catch {
       print("Failed to set up audio session: \(error)")
     }
+  }
+
+  private func pauseForInterruption() {
+    for timer in fadeTimers.values {
+      timer.invalidate()
+    }
+    fadeTimers.removeAll()
+
+    for player in players.values where player.isPlaying {
+      player.pause()
+    }
+  }
+
+  private func resumeCurrentSoundIfNeeded() {
+    guard isPlaying, let currentSound else { return }
+    play(currentSound)
   }
 
   private func setupRemoteCommandCenter() {
@@ -206,6 +231,13 @@ class AmbientManager {
       name: AVAudioSession.routeChangeNotification,
       object: nil
     )
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleMediaServicesReset),
+      name: AVAudioSession.mediaServicesWereResetNotification,
+      object: nil
+    )
   }
 
   @objc private func handleInterruption(notification: Notification) {
@@ -218,16 +250,19 @@ class AmbientManager {
 
     switch type {
     case .began:
-      // Audio session interrupted - pause playback
-      stop()
+      // Preserve the selected sound so it can be restarted when the interruption ends.
+      pauseForInterruption()
     case .ended:
-      guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else { return }
+      activateAudioSession()
+
+      guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
+        resumeCurrentSoundIfNeeded()
+        return
+      }
+
       let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
       if options.contains(.shouldResume) {
-        // Interruption ended - resume playback
-        if let currentSound = currentSound {
-          play(currentSound)
-        }
+        resumeCurrentSoundIfNeeded()
       }
     @unknown default:
       break
@@ -245,12 +280,24 @@ class AmbientManager {
     // Handle route changes (e.g., headphones disconnected)
     switch reason {
     case .oldDeviceUnavailable:
-      // Audio route changed - ensure playback continues properly
-      if let currentSound = currentSound {
-        play(currentSound)
-      }
+      activateAudioSession()
+      resumeCurrentSoundIfNeeded()
     default:
       break
     }
+  }
+
+  @objc private func handleMediaServicesReset() {
+    // AVAudioPlayers become invalid after a media services reset and must be recreated.
+    for timer in fadeTimers.values {
+      timer.invalidate()
+    }
+    fadeTimers.removeAll()
+
+    players.removeAll()
+
+    activateAudioSession()
+    setupPlayers()
+    resumeCurrentSoundIfNeeded()
   }
 }

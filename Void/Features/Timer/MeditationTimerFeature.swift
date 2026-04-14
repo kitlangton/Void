@@ -90,13 +90,10 @@ struct MeditationTimerFeature {
       return .none
     }
 
-    /// If there's a max duration, and we've reached it, we need to stop the timer and play the finish sound
+    /// If there's a max duration and we've reached it, stop the timer flow.
     if let durationSeconds = state.settings.durationSeconds,
        secondsElapsed >= durationSeconds
     {
-      Task {
-        await audioManager.play(.completionBell)
-      }
       return .send(.delegate(.timerCompleted), animation: .spring)
     }
 
@@ -105,10 +102,9 @@ struct MeditationTimerFeature {
        intervalSeconds > 0,
        secondsElapsed.isMultiple(of: intervalSeconds)
     {
-      Task {
+      return .run { _ in
         await audioManager.play(.intervalBell)
       }
-      return .none
     }
 
     return .none

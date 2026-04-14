@@ -385,12 +385,12 @@
 			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.17.1;
+				minimumVersion = 1.25.5;
 			};
 		};
 		47EE61B52D629DA6007CBCE1 /* XCRemoteSwiftPackageReference "Inject" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/krzysztofzablocki/Inject?tab=readme-ov-file";
+			repositoryURL = "https://github.com/krzysztofzablocki/Inject";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.5.2;
