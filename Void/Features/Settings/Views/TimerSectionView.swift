@@ -39,7 +39,10 @@ struct TimerSectionView: View {
   @ViewBuilder
   private var customDurationInput: some View {
     NumberInputView(
-      binding: $store.settings.durationMinutes.animation(.spring),
+      binding: Binding(
+        get: { store.settings.durationMinutes },
+        set: { store.send(.setDurationMinutes($0), animation: .spring) }
+      ),
       unit: "minute",
       handleDismiss: {
         showingCustomDurationSheet = false

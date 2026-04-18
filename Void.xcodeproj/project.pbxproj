@@ -384,8 +384,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.25.5;
+				kind = revision;
+				revision = 7517cc32aa083773f096dc4724a0b83215bf3c55;
 			};
 		};
 		47EE61B52D629DA6007CBCE1 /* XCRemoteSwiftPackageReference "Inject" */ = {
@@ -400,8 +400,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/EmergeTools/Pow";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.5;
+				kind = revision;
+				revision = 1b4b1dda28c50b95f0872927ee2226fe8b58950e;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

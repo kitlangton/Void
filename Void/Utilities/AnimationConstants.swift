@@ -6,7 +6,7 @@ enum AnimationConstants {
     static let quoteOffset: CGFloat = -120
     static let timerOffset: CGFloat = 200
     
-    static let blurReplace = AnyTransition.blurReplace
+    static let blurReplace = AnyTransition.opacity
     static let fadeMove = AnyTransition.asymmetric(
       insertion: .opacity.combined(with: .move(edge: .bottom)),
       removal: .opacity.combined(with: .move(edge: .top))

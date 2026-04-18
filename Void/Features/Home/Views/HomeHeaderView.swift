@@ -10,7 +10,11 @@ struct HomeHeaderView: View {
       if !store.isActive {
         logoAndStats
         QuotesView()
-          .transition(AnimationConstants.Transition.blurReplace.combined(with: .offset(y: AnimationConstants.Transition.quoteOffset)))
+          .transition(
+            AnimationConstants.Transition.blurReplace.combined(
+              with: .move(edge: .top)
+            )
+          )
       }
     }
   }
@@ -31,6 +35,10 @@ struct HomeHeaderView: View {
       
       Spacer()
     }
-    .transition(AnimationConstants.Transition.blurReplace.combined(with: .offset(y: AnimationConstants.Transition.logoOffset)))
+    .transition(
+      AnimationConstants.Transition.blurReplace.combined(
+        with: .move(edge: .top)
+      )
+    )
   }
 }

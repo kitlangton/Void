@@ -25,7 +25,11 @@ struct MeditationBackgroundView: View {
   private var meditationTimerLayer: some View {
     if let meditationTimer = store.scope(state: \.meditationTimer, action: \.meditationTimer) {
       MeditationTimerView(store: meditationTimer)
-        .transition(AnimationConstants.Transition.blurReplace.combined(with: .offset(y: AnimationConstants.Transition.timerOffset)))
+        .transition(
+          AnimationConstants.Transition.blurReplace.combined(
+            with: .move(edge: .bottom)
+          )
+        )
     }
   }
 }

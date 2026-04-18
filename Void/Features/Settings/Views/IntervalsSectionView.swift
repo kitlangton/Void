@@ -75,7 +75,10 @@ struct IntervalsSectionView: View {
   @ViewBuilder
   private var customIntervalInput: some View {
     NumberInputView(
-      binding: $store.settings.intervalMinutes.animation(.spring),
+      binding: Binding(
+        get: { store.settings.intervalMinutes },
+        set: { store.send(.setIntervalMinutes($0), animation: .spring) }
+      ),
       unit: "minute",
       handleDismiss: {
         showingCustomIntervalSheet = false

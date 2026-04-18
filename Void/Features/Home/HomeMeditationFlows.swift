@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import Foundation
+import SwiftUI
 
 extension HomeReducer {
   func handleMeditationStateChange(state: inout State) {
