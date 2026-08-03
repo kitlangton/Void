@@ -10,10 +10,36 @@
 		47EE61B42D629CA4007CBCE1 /* ComposableArchitecture in Frameworks */ = {isa = PBXBuildFile; productRef = 47EE61B32D629CA4007CBCE1 /* ComposableArchitecture */; };
 		47EE61B72D629DA6007CBCE1 /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 47EE61B62D629DA6007CBCE1 /* Inject */; };
 		47EE61DE2D629E3E007CBCE1 /* Pow in Frameworks */ = {isa = PBXBuildFile; productRef = 47EE61DD2D629E3E007CBCE1 /* Pow */; };
+		AA000000000000000000000F /* VoidWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000001 /* VoidWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AA000000000000000000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 47EE61862D629BCE007CBCE1 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AA0000000000000000000008;
+			remoteInfo = VoidWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AA000000000000000000000E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AA000000000000000000000F /* VoidWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		47EE618E2D629BCE007CBCE1 /* Void.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Void.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA0000000000000000000001 /* VoidWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VoidWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -24,6 +50,13 @@
 			);
 			target = 47EE618D2D629BCE007CBCE1 /* Void */;
 		};
+		AA0000000000000000000004 /* Exceptions for "VoidWidgets" folder in "VoidWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AA0000000000000000000008 /* VoidWidgets */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +66,19 @@
 				47EE619E2D629BCF007CBCE1 /* Exceptions for "Void" folder in "Void" target */,
 			);
 			path = Void;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000002 /* VoidWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AA0000000000000000000004 /* Exceptions for "VoidWidgets" folder in "VoidWidgets" target */,
+			);
+			path = VoidWidgets;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000003 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -48,6 +94,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -55,6 +108,8 @@
 			isa = PBXGroup;
 			children = (
 				47EE61902D629BCE007CBCE1 /* Void */,
+				AA0000000000000000000003 /* Shared */,
+				AA0000000000000000000002 /* VoidWidgets */,
 				47EE618F2D629BCE007CBCE1 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -63,6 +118,7 @@
 			isa = PBXGroup;
 			children = (
 				47EE618E2D629BCE007CBCE1 /* Void.app */,
+				AA0000000000000000000001 /* VoidWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -77,13 +133,16 @@
 				47EE618A2D629BCE007CBCE1 /* Sources */,
 				47EE618B2D629BCE007CBCE1 /* Frameworks */,
 				47EE618C2D629BCE007CBCE1 /* Resources */,
+				AA000000000000000000000E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AA000000000000000000000D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				47EE61902D629BCE007CBCE1 /* Void */,
+				AA0000000000000000000003 /* Shared */,
 			);
 			name = Void;
 			packageProductDependencies = (
@@ -95,6 +154,29 @@
 			productReference = 47EE618E2D629BCE007CBCE1 /* Void.app */;
 			productType = "com.apple.product-type.application";
 		};
+		AA0000000000000000000008 /* VoidWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "VoidWidgets" */;
+			buildPhases = (
+				AA0000000000000000000006 /* Sources */,
+				AA0000000000000000000005 /* Frameworks */,
+				AA0000000000000000000007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AA0000000000000000000002 /* VoidWidgets */,
+				AA0000000000000000000003 /* Shared */,
+			);
+			name = VoidWidgets;
+			packageProductDependencies = (
+			);
+			productName = VoidWidgets;
+			productReference = AA0000000000000000000001 /* VoidWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -103,7 +185,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					47EE618D2D629BCE007CBCE1 = {
 						CreatedOnToolsVersion = 16.2;
@@ -130,12 +212,20 @@
 			projectRoot = "";
 			targets = (
 				47EE618D2D629BCE007CBCE1 /* Void */,
+				AA0000000000000000000008 /* VoidWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		47EE618C2D629BCE007CBCE1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AA0000000000000000000007 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -152,7 +242,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AA0000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AA000000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AA0000000000000000000008 /* VoidWidgets */;
+			targetProxy = AA000000000000000000000C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		47EE61A02D629BCF007CBCE1 /* Debug */ = {
@@ -165,13 +270,14 @@
 				CURRENT_PROJECT_VERSION = 100;
 				DEVELOPMENT_ASSET_PATHS = "\"Void/Preview Content\"";
 				DEVELOPMENT_TEAM = QC99C9JE59;
+				EMIT_FRONTEND_COMMAND_LINES = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Void/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Void;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your health data to track your activities";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need permission to save your activities to Health";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Void reads your mindful sessions to show meditation statistics and streaks.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Void saves completed meditations as mindful sessions in Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -181,7 +287,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				"OTHER_LDFLAGS[arch=*]" = (
 					"-Xlinker",
 					"-interposable",
@@ -213,8 +319,8 @@
 				INFOPLIST_FILE = Void/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Void;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "We need access to your health data to track your activities";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "We need permission to save your activities to Health";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Void reads your mindful sessions to show meditation statistics and streaks.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Void saves completed meditations as mindful sessions in Health.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -224,7 +330,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kitlangton.Void;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -356,6 +462,56 @@
 			};
 			name = Release;
 		};
+		AA000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 100;
+				DEVELOPMENT_TEAM = QC99C9JE59;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VoidWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VoidWidgets;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kitlangton.Void.VoidWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		AA000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 100;
+				DEVELOPMENT_TEAM = QC99C9JE59;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = VoidWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = VoidWidgets;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kitlangton.Void.VoidWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -377,6 +533,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AA0000000000000000000009 /* Build configuration list for PBXNativeTarget "VoidWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA000000000000000000000A /* Debug */,
+				AA000000000000000000000B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
@@ -384,8 +549,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-composable-architecture";
 			requirement = {
-				kind = revision;
-				revision = 7517cc32aa083773f096dc4724a0b83215bf3c55;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.26.1;
 			};
 		};
 		47EE61B52D629DA6007CBCE1 /* XCRemoteSwiftPackageReference "Inject" */ = {
@@ -393,15 +558,15 @@
 			repositoryURL = "https://github.com/krzysztofzablocki/Inject";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.5.2;
+				minimumVersion = 1.6.0;
 			};
 		};
 		47EE61DC2D629E3E007CBCE1 /* XCRemoteSwiftPackageReference "Pow" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/EmergeTools/Pow";
 			requirement = {
-				kind = revision;
-				revision = 1b4b1dda28c50b95f0872927ee2226fe8b58950e;
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.6;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

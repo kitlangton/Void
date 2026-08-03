@@ -94,7 +94,9 @@ struct MeditationTimerFeature {
     if let durationSeconds = state.settings.durationSeconds,
        secondsElapsed >= durationSeconds
     {
-      return .send(.delegate(.timerCompleted), animation: .spring)
+      return .run { send in
+        await send(.delegate(.timerCompleted), animation: .spring)
+      }
     }
 
     /// if current seconds is a multiple of settings.intervalMinutes, we need to play a chime sound
@@ -116,7 +118,7 @@ struct MeditationTimerFeature {
   ) async {
     print("starting timer")
     var seconds = elapsedTime.secondsElapsed(now: date.now)
-    for await _ in clock.timer(interval: .milliseconds(100)) {
+    for await _ in clock.timer(interval: .seconds(1)) {
       let now = date.now
       let newSeconds = elapsedTime.secondsElapsed(now: now)
       let newSecondsInt = Int(newSeconds)

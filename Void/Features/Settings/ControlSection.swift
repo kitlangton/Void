@@ -96,23 +96,38 @@ struct ControlSection<Content: View>: View {
     .blur(radius: otherSectionIsActive ? 1 : 0)
     .drawingGroup()
     .background {
-      RoundedRectangle(cornerRadius: 12)
-        .fill(.thickMaterial)
-        .stroke(Color.primary.opacity(0.2), lineWidth: 1)
-        .opacity(isExpanded ? 0.7 : 0)
-        .mask {
-          LinearGradient(
-            stops: [
-              .init(color: .white, location: 0),
-              .init(color: .clear, location: 1),
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-          )
-        }
+      sectionBackground
     }
     .opacity(otherSectionIsActive ? 0.6 : 1)
     .padding(.bottom, isExpanded ? 12 : 0)
     .enableInjection()
+  }
+
+  @ViewBuilder
+  private var sectionBackground: some View {
+    if #available(iOS 26.0, *) {
+      RoundedRectangle(cornerRadius: 12)
+        .fill(.clear)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+        .opacity(isExpanded ? 0.8 : 0)
+        .mask { backgroundOpacityMask }
+    } else {
+      RoundedRectangle(cornerRadius: 12)
+        .fill(.thickMaterial)
+        .stroke(Color.primary.opacity(0.2), lineWidth: 1)
+        .opacity(isExpanded ? 0.7 : 0)
+        .mask { backgroundOpacityMask }
+    }
+  }
+
+  private var backgroundOpacityMask: some View {
+    LinearGradient(
+      stops: [
+        .init(color: .white, location: 0),
+        .init(color: .clear, location: 1),
+      ],
+      startPoint: .top,
+      endPoint: .bottom
+    )
   }
 }

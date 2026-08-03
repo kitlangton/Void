@@ -27,7 +27,6 @@ struct MeditationTimerView: View {
         .scaleEffect(isActive ? 1 : 0.98)
         .frame(maxWidth: .infinity, alignment: .center)
         .padding(.horizontal)
-        .animation(.nice, value: store.elapsedSeconds)
         .animation(.nice, value: store.settings.durationMinutes)
         .overlay(alignment: .bottom) {
           TapToPauseResumeText(isPaused: store.isPaused)
@@ -38,7 +37,6 @@ struct MeditationTimerView: View {
         .contentShape(.rect)
     }
     .buttonStyle(.plain)
-    .drawingGroup()
     .padding(-120)
     .task(id: store.isPaused) {
       if !store.isPaused {
@@ -90,7 +88,6 @@ struct MeditationTimerView: View {
     }
   }
 }
-
 
 struct TapToPauseResumeText: View {
   var isPaused: Bool

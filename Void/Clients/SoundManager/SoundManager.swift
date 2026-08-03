@@ -53,12 +53,6 @@ extension DependencyValues {
 // MARK: - SoundManager
 
 final actor SoundManagerLive {
-  private let ambientManager: AmbientManager
-
-  init(ambientManager: AmbientManager = .shared) {
-    self.ambientManager = ambientManager
-  }
-
   // MARK: - Public Methods
 
   func play(_ sound: Sound) {
@@ -83,9 +77,9 @@ final actor SoundManagerLive {
 
   func setAmbient(_ sound: AmbientSound?) async {
     if let sound {
-      await ambientManager.play(sound)
+      await AmbientManager.shared.play(sound)
     } else {
-      await ambientManager.stop()
+      await AmbientManager.shared.stop()
     }
   }
 

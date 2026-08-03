@@ -19,6 +19,16 @@ struct StatsClient: Sendable {
 struct DailyStats: Equatable {
   let streak: Int
   let totalMinutesToday: Double
+  let recentPracticeDays: [PracticeDay]
+}
+
+struct PracticeDay: Equatable, Identifiable, Sendable {
+  let date: Date
+  let minutes: Double
+  let isInCurrentStreak: Bool
+
+  var id: Date { date }
+  var didMeditate: Bool { minutes > 0 }
 }
 
 extension StatsClient: DependencyKey {
@@ -32,7 +42,9 @@ extension StatsClient: DependencyKey {
 
   static var previewValue: StatsClient {
     StatsClient(
-      getDailyStats: { .init(streak: 4, totalMinutesToday: 10) },
+      getDailyStats: {
+        sampleDailyStats(totalMinutesToday: 10)
+      },
       getWeeklyStats: { [10] }
     )
   }
@@ -55,7 +67,8 @@ struct StatsClientLive: Sendable {
     let sessions = try await healthKitClient.getDailyMindfulSessions()
     return DailyStats(
       streak: calculateStreak(from: sessions),
-      totalMinutesToday: calculateTotalMinutesToday(from: sessions)
+      totalMinutesToday: calculateTotalMinutesToday(from: sessions),
+      recentPracticeDays: calculateRecentPracticeDays(from: sessions)
     )
   }
 
@@ -76,33 +89,57 @@ struct StatsClientLive: Sendable {
   }
 
   private func calculateStreak(from sessions: [Session]) -> Int {
+    calculateCurrentStreakDates(from: sessions).count
+  }
+
+  private func calculateCurrentStreakDates(from sessions: [Session]) -> Set<Date> {
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
 
     let sessionDates = Set(sessions.map { calendar.startOfDay(for: $0.date) })
-    let hasTodaySession = sessionDates.contains(today)
-
     guard let yesterday = calendar.date(byAdding: .day, value: -1, to: today) else {
-      return hasTodaySession ? 1 : 0
+      return sessionDates.contains(today) ? [today] : []
     }
 
-    var currentDate = hasTodaySession ? today : yesterday
-    var streak = hasTodaySession ? 1 : 0
+    guard sessionDates.contains(today) || sessionDates.contains(yesterday) else {
+      return []
+    }
+
+    var currentDate = sessionDates.contains(today) ? today : yesterday
+    var streakDates: Set<Date> = [currentDate]
 
     while let previousDay = calendar.date(byAdding: .day, value: -1, to: currentDate) {
       if sessionDates.contains(previousDay) {
-        streak += 1
+        streakDates.insert(previousDay)
         currentDate = previousDay
       } else {
         break
       }
     }
 
-    if !hasTodaySession && sessionDates.contains(yesterday) {
-      streak += 1
+    return streakDates
+  }
+
+  private func calculateRecentPracticeDays(from sessions: [Session], dayCount: Int = 42) -> [PracticeDay] {
+    let calendar = Calendar.current
+    let today = calendar.startOfDay(for: Date())
+    let streakDates = calculateCurrentStreakDates(from: sessions)
+    let minutesByDay = sessions.reduce(into: [Date: Double]()) { result, session in
+      result[calendar.startOfDay(for: session.date)] = session.duration / 60
     }
 
-    return streak
+    return (0 ..< dayCount).compactMap { offset in
+      guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else {
+        return nil
+      }
+
+      let day = calendar.startOfDay(for: date)
+      return PracticeDay(
+        date: day,
+        minutes: minutesByDay[day] ?? 0,
+        isInCurrentStreak: streakDates.contains(day)
+      )
+    }
   }
 
   private func calculateWeeklyStats(from sessions: [Session]) -> [Double] {
@@ -125,5 +162,40 @@ struct StatsClientLive: Sendable {
     }
 
     return stats.reversed()
+  }
+}
+
+/// Sample stats whose streak count always matches the highlighted days.
+func sampleDailyStats(totalMinutesToday: Double = 12) -> DailyStats {
+  let days = samplePracticeDays()
+  return DailyStats(
+    streak: days.count(where: \.isInCurrentStreak),
+    totalMinutesToday: totalMinutesToday,
+    recentPracticeDays: days
+  )
+}
+
+func samplePracticeDays() -> [PracticeDay] {
+  let calendar = Calendar.current
+  let today = calendar.startOfDay(for: Date())
+
+  /// A 14-day current streak, a rest day, then a looser earlier habit.
+  let streakLength = 14
+  let earlierPracticedOffsets: Set<Int> = [15, 16, 17, 19, 20, 22, 23, 24, 27, 29, 30, 33, 34, 38, 41]
+  let sampleMinutes: [Double] = [12, 20, 10, 15, 30, 12, 25, 10, 18, 22, 15, 10, 20, 12]
+
+  return (0 ..< 42).compactMap { offset in
+    guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else {
+      return nil
+    }
+
+    let isInStreak = offset < streakLength
+    let practiced = isInStreak || earlierPracticedOffsets.contains(offset)
+
+    return PracticeDay(
+      date: date,
+      minutes: practiced ? sampleMinutes[offset % sampleMinutes.count] : 0,
+      isInCurrentStreak: isInStreak
+    )
   }
 }

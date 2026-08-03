@@ -100,7 +100,7 @@ final class AmbientManager {
     // Cancel any existing fade for this sound
     fadeTimers[sound]?.invalidate()
 
-    guard let player = players[sound] else {
+    guard players[sound] != nil else {
       completion?()
       return
     }
@@ -113,7 +113,7 @@ final class AmbientManager {
 
     fadeTimers[sound] = Timer.scheduledTimer(withTimeInterval: stepDuration, repeats: true) { [weak self] timer in
       Task { @MainActor [weak self] in
-        guard let self = self else {
+        guard let self, let player = self.players[sound] else {
           timer.invalidate()
           completion?()
           return

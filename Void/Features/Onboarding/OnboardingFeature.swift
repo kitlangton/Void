@@ -104,6 +104,9 @@ struct OnboardingFeature {
         return .run { send in
           let permission = try await healthKitClient.requestAuthorization()
           await send(.healthKitPermissionsResponse(permission))
+        } catch: { error, send in
+          print("HealthKit authorization failed: \(error)")
+          await send(.healthKitPermissionsResponse(.notDetermined))
         }
 
       case let .healthKitPermissionsResponse(permission):
@@ -114,7 +117,9 @@ struct OnboardingFeature {
 
         switch permission {
         case .authorized:
-          return .send(.delegate(.onboardingComplete), animation: .spring)
+          return .run { send in
+            await send(.delegate(.onboardingComplete), animation: .spring)
+          }
         default:
           withAnimation(.spring) {
             state.userDeniedPermissions = true

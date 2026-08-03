@@ -11,6 +11,7 @@ BUILD_DIR="${BUILD_DIR:-$ROOT_DIR/build/testflight}"
 EXPORT_OPTIONS_PLIST="${EXPORT_OPTIONS_PLIST:-$ROOT_DIR/scripts/export-options-app-store.plist}"
 BUILD_NUMBER="${BUILD_NUMBER:-$(date +%Y%m%d%H%M%S)}"
 VERSION="${VERSION:-}"
+XCODEBUILD_JOBS="${XCODEBUILD_JOBS:-4}"
 
 APPLE_ID="${APPLE_ID:-}"
 APPLE_APP_PASSWORD="${APPLE_APP_PASSWORD:-}"
@@ -91,11 +92,26 @@ done
 
 run() {
   printf '+ '
-  printf '%q ' "$@"
+  local redact_next=0
+  local argument
+  for argument in "$@"; do
+    if [[ "$redact_next" -eq 1 ]]; then
+      printf '<redacted> '
+      redact_next=0
+      continue
+    fi
+
+    printf '%q ' "$argument"
+    case "$argument" in
+      -u|-p|--username|--password|--api-key|--api-issuer|--auth-string)
+        redact_next=1
+        ;;
+    esac
+  done
   printf '\n'
 
   if [[ "$DRY_RUN" -eq 0 ]]; then
-    "$@"
+    "$@" || return $?
   fi
 }
 
@@ -111,6 +127,12 @@ require_file() {
     printf 'Missing required file: %s\n' "$1" >&2
     exit 1
   }
+}
+
+keychain_account() {
+  security find-generic-password -s "$1" 2>/dev/null \
+    | sed -n 's/^[[:space:]]*"acct"<blob>="\(.*\)"$/\1/p' \
+    | head -n 1
 }
 
 json_read_provider_id() {
@@ -180,13 +202,14 @@ resolve_provider_public_id() {
   }
 }
 
-build_auth_upload_command() {
-  local ipa_path="$1"
-  local -a cmd=(xcrun altool --upload-package "$ipa_path" --output-format json --show-progress)
+build_authenticated_altool_command() {
+  local operation="$1"
+  local ipa_path="$2"
+  local -a cmd=(xcrun altool "$operation" "$ipa_path" --output-format json --show-progress)
 
   if [[ -n "$APP_STORE_CONNECT_API_KEY_ID" || -n "$APP_STORE_CONNECT_API_ISSUER_ID" || -n "$APP_STORE_CONNECT_API_KEY_PATH" ]]; then
     [[ -n "$APP_STORE_CONNECT_API_KEY_ID" && -n "$APP_STORE_CONNECT_API_ISSUER_ID" && -n "$APP_STORE_CONNECT_API_KEY_PATH" ]] || {
-      printf 'API key upload requires APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID, and APP_STORE_CONNECT_API_KEY_PATH.\n' >&2
+      printf 'App Store Connect authentication requires APP_STORE_CONNECT_API_KEY_ID, APP_STORE_CONNECT_API_ISSUER_ID, and APP_STORE_CONNECT_API_KEY_PATH.\n' >&2
       exit 1
     }
 
@@ -197,7 +220,7 @@ build_auth_upload_command() {
     cmd+=(--api-key "$APP_STORE_CONNECT_API_KEY_ID" --api-issuer "$APP_STORE_CONNECT_API_ISSUER_ID")
   else
     [[ -n "$APPLE_ID" ]] || {
-      printf 'Upload requires APPLE_ID or App Store Connect API key credentials.\n' >&2
+      printf 'App Store Connect authentication requires APPLE_ID or API key credentials.\n' >&2
       exit 1
     }
 
@@ -219,7 +242,13 @@ build_auth_upload_command() {
 require_command xcodebuild
 require_command xcrun
 
-resolve_provider_public_id
+if [[ -z "$APPLE_ID" && -z "$APP_STORE_CONNECT_API_KEY_ID" ]]; then
+  APPLE_ID="$(keychain_account "$APPLE_APP_PASSWORD_KEYCHAIN_ITEM")"
+fi
+
+if [[ "$ARCHIVE_ONLY" -eq 0 && "$DRY_RUN" -eq 0 ]]; then
+  resolve_provider_public_id
+fi
 
 mkdir -p "$BUILD_DIR"
 
@@ -234,6 +263,7 @@ XCODEBUILD_ARCHIVE=(
   -project "$PROJECT_PATH"
   -scheme "$SCHEME"
   -configuration "$CONFIGURATION"
+  -jobs "$XCODEBUILD_JOBS"
   -archivePath "$ARCHIVE_PATH"
   -destination "generic/platform=iOS"
   -allowProvisioningUpdates
@@ -287,8 +317,13 @@ if [[ "$ARCHIVE_ONLY" -eq 1 ]]; then
   exit 0
 fi
 
+printf 'Validating with App Store Connect...\n'
+mapfile -d '' -t VALIDATE_CMD < <(build_authenticated_altool_command --validate-app "$IPA_PATH")
+run "${VALIDATE_CMD[@]}"
+
 printf 'Uploading to App Store Connect...\n'
-mapfile -d '' -t UPLOAD_CMD < <(build_auth_upload_command "$IPA_PATH")
+mapfile -d '' -t UPLOAD_CMD < <(build_authenticated_altool_command --upload-package "$IPA_PATH")
+UPLOAD_CMD+=(--wait)
 run "${UPLOAD_CMD[@]}"
 
-printf 'Upload submitted successfully. Watch processing in App Store Connect / TestFlight.\n'
+printf 'Upload processed successfully. The build is ready in App Store Connect / TestFlight.\n'

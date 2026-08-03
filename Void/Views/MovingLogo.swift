@@ -2,56 +2,7 @@ import Inject
 import Pow
 import SwiftUI
 
-struct UpdatingDouble: View, Animatable {
-  var double: Double
-
-  var animatableData: Double {
-    get { double }
-    set { double = newValue }
-  }
-
-  var body: some View {
-    Text("\(animatableData)")
-  }
-}
-
-struct Rotating: ViewModifier, Animatable {
-  var rotationSpeed: CGFloat
-
-  @State var rotation: Double = 0
-
-  var animatableData: CGFloat {
-    get { rotationSpeed }
-    set { rotationSpeed = newValue }
-  }
-
-  func body(content: Content) -> some View {
-    TimelineView(.animation) { timeline in
-      content
-        .rotationEffect(.degrees(rotation))
-        .onChange(of: timeline.date) {
-          rotation += 1 * rotationSpeed
-        }
-    }
-  }
-}
-
-extension View {
-  func rotating(speed: CGFloat) -> some View {
-    modifier(Rotating(rotationSpeed: speed))
-  }
-}
-
 struct MovingLogoView: View {
-  init(phase: Phase) {
-    self.phase = phase
-    switch phase {
-    case .closed,
-         .burst: rotationSpeed = 0
-    case let .spinning(speed): rotationSpeed = speed
-    }
-  }
-
   enum Phase: Equatable, Hashable {
     case closed
     case burst
@@ -59,9 +10,10 @@ struct MovingLogoView: View {
   }
 
   @ObserveInjection var inject
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var phase: Phase
-  @State var rotationSpeed: CGFloat
+  @State private var rotation = 0.0
 
   var color: Color {
     switch phase {
@@ -92,33 +44,33 @@ struct MovingLogoView: View {
       .fill(color)
       .animation(.spring, value: rayWidthMultiplier)
       .aspectRatio(1, contentMode: .fit)
-      .rotating(speed: rotationSpeed)
+      .drawingGroup()
+      .rotationEffect(.degrees(rotation))
       .animation(.nice) {
         $0.scaleEffect(scale)
       }
-      .task(id: phase) {
+      .task(id: reduceMotion ? nil : phase) {
+        guard !reduceMotion else {
+          rotation = 0
+          return
+        }
+
         switch phase {
         case .closed:
-          withAnimation(.spring(duration: 0.2)) {
-            rotationSpeed = 10
-          }
           withAnimation(.easeOut(duration: 2)) {
-            rotationSpeed = 0
+            rotation += 720
           }
         case let .spinning(speed):
-          withAnimation(.spring) {
-            rotationSpeed = speed
+          guard speed > 0 else { return }
+          withAnimation(.linear(duration: 6 / speed).repeatForever(autoreverses: false)) {
+            rotation += 360
           }
         case .burst:
-          withAnimation(.spring(duration: 0.2)) {
-            rotationSpeed = 10
-          }
           withAnimation(.easeOut(duration: 3)) {
-            rotationSpeed = 0.5
+            rotation += 1080
           }
         }
       }
-      .drawingGroup()
       .changeEffect(
         .glow(color: .white.opacity(0.5)),
         value: phase == .burst,

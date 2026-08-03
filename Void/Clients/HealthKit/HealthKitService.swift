@@ -138,6 +138,85 @@ class HealthKitClientLive {
     }
   }
 
+  func getSessions(on day: Date) async throws -> [MindfulSessionSample] {
+    guard let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) else {
+      throw HealthKitServiceError.mindfulTypeUnavailable
+    }
+
+    let calendar = Calendar.current
+    let startOfDay = calendar.startOfDay(for: day)
+    let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)
+    let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: endOfDay)
+    let samples = try await querySamples(type: mindfulType, predicate: predicate)
+    let ownSource = HKSource.default()
+
+    return samples.map { sample in
+      MindfulSessionSample(
+        id: sample.uuid,
+        startDate: sample.startDate,
+        endDate: sample.endDate,
+        isEditable: sample.sourceRevision.source == ownSource
+      )
+    }
+    .sorted { $0.startDate < $1.startDate }
+  }
+
+  func deleteMindfulSession(uuid: UUID) async throws {
+    guard let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) else {
+      throw HealthKitServiceError.mindfulTypeUnavailable
+    }
+
+    let predicate = HKQuery.predicateForObject(with: uuid)
+    let samples = try await querySamples(type: mindfulType, predicate: predicate)
+    guard let sample = samples.first else { return }
+    try await healthStore.delete(sample)
+  }
+
+  func updateMindfulSession(uuid: UUID, startDate: Date, endDate: Date) async throws {
+    guard let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) else {
+      throw HealthKitServiceError.mindfulTypeUnavailable
+    }
+
+    let replacement = HKCategorySample(
+      type: mindfulType,
+      value: HKCategoryValue.notApplicable.rawValue,
+      start: startDate,
+      end: endDate
+    )
+    try await healthStore.save(replacement)
+
+    do {
+      try await deleteMindfulSession(uuid: uuid)
+    } catch {
+      try? await healthStore.delete(replacement)
+      throw error
+    }
+  }
+
+  private func querySamples(
+    type: HKSampleType,
+    predicate: NSPredicate
+  ) async throws -> [HKSample] {
+    try await withCheckedThrowingContinuation { continuation in
+      let query = HKSampleQuery(
+        sampleType: type,
+        predicate: predicate,
+        limit: HKObjectQueryNoLimit,
+        sortDescriptors: [
+          NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: true),
+        ]
+      ) { _, samples, error in
+        if let error = error {
+          continuation.resume(throwing: error)
+        } else {
+          continuation.resume(returning: samples ?? [])
+        }
+      }
+
+      healthStore.execute(query)
+    }
+  }
+
   func checkAuthorization() -> HealthKitPermission {
     guard let mindfulType = HKObjectType.categoryType(forIdentifier: .mindfulSession) else {
       fatalError("Failed to create mindful type")

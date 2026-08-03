@@ -23,8 +23,11 @@ struct MeditationBackgroundView: View {
   
   @ViewBuilder
   private var meditationTimerLayer: some View {
-    if let meditationTimer = store.scope(state: \.meditationTimer, action: \.meditationTimer) {
+    if store.isActive,
+       let meditationTimer = store.scope(state: \.meditationTimer, action: \.meditationTimer)
+    {
       MeditationTimerView(store: meditationTimer)
+        .allowsHitTesting(store.settings.expandedSection == nil)
         .transition(
           AnimationConstants.Transition.blurReplace.combined(
             with: .move(edge: .bottom)

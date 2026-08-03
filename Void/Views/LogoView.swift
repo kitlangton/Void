@@ -121,6 +121,7 @@ struct AnimatedLogoExample: View {
 
 struct RotatingLogoView: View {
   @State private var rotation = 0.0
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var isActive: Bool = true
 
@@ -131,8 +132,8 @@ struct RotatingLogoView: View {
       rotation: .degrees(rotation)
     )
     .drawingGroup()
-    .task(id: isActive) {
-      if isActive {
+    .task(id: isActive && !reduceMotion) {
+      if isActive && !reduceMotion {
         withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
           rotation = 360
         }

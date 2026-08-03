@@ -10,6 +10,8 @@ struct HomeHeaderView: View {
       if !store.isActive {
         logoAndStats
         QuotesView()
+          .opacity(store.stats.isTodayExpanded ? 0.25 : 1)
+          .animation(.nice, value: store.stats.isTodayExpanded)
           .transition(
             AnimationConstants.Transition.blurReplace.combined(
               with: .move(edge: .top)

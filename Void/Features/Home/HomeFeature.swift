@@ -36,6 +36,7 @@ struct HomeReducer {
 
   @Dependency(\.date) var date
   @Dependency(\.healthKitClient) var healthKitClient
+  @Dependency(\.liveActivityClient) var liveActivityClient
   @Dependency(\.soundManager) var audioManager
 
   var body: some ReducerOf<Self> {
@@ -79,6 +80,14 @@ struct HomeReducer {
     .ifLet(\.meditationTimer, action: \.meditationTimer) {
       MeditationTimerFeature()
     }
+    .onChange(of: \.meditationState) { _, newValue in
+      Reduce { state, _ in
+        handleMeditationStateChange(state: &state)
+        return .run { _ in
+          await liveActivityClient.sync(newValue?.elapsedTime)
+        }
+      }
+    }
   }
 }
 
@@ -94,6 +103,25 @@ struct HomeView: View {
   var body: some View {
     contentView
       .keyboardAdaptive()
+      .onChange(of: store.stats.editingSessionID) {
+        let keyboard = KeyboardManager.shared
+        if store.stats.editingSessionID != nil {
+          keyboard.numberBinding = Binding(
+            get: { store.stats.editedMinutes },
+            set: { store.send(.stats(.binding(.set(\.editedMinutes, $0)))) }
+          )
+          keyboard.handleDismiss = { store.send(.stats(.commitEdit), animation: .nice) }
+        }
+        withAnimation(.nice) {
+          keyboard.isVisible = store.stats.editingSessionID != nil
+        }
+      }
+      .onDisappear {
+        let keyboard = KeyboardManager.shared
+        keyboard.isVisible = false
+        keyboard.numberBinding = nil
+        keyboard.handleDismiss = nil
+      }
       .onChange(of: scenePhase) {
         if scenePhase == .active {
           store.send(.onAppear)

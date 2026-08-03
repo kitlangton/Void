@@ -1,0 +1,31 @@
+{
+  "fill": {
+    "solid": "extended-srgb:0.0,0.0,0.0,1.0"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "fill": {
+            "solid": "extended-srgb:1.0,0.263,0.384,1.0"
+          },
+          "glass": true,
+          "image-name": "burst.svg",
+          "name": "burst"
+        }
+      ],
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.4
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0.0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

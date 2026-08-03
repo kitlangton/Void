@@ -2,16 +2,14 @@
 import Inject
 import SwiftUI
 
+@MainActor
 @Observable
-class PulseManager {
+final class PulseManager {
   var pulses: Set<UUID> = []
 
   func addPulse() -> UUID {
     let id = UUID()
-    withAnimation {
-      pulses.insert(id)
-      ()
-    }
+    pulses.insert(id)
     return id
   }
 
@@ -34,7 +32,6 @@ struct PulseModifier<A: Equatable>: ViewModifier {
 
           ForEach(Array(pulseManager.pulses), id: \.self) { id in
             PulseView(direction: direction)
-              .drawingGroup()
               .id(id)
           }
         }
@@ -45,7 +42,7 @@ struct PulseModifier<A: Equatable>: ViewModifier {
       .onChange(of: trigger) {
         let id = pulseManager.addPulse()
         Task {
-          try? await Task.sleep(for: .seconds(6))
+          try? await Task.sleep(for: .seconds(2))
           pulseManager.removePulse(id)
         }
       }

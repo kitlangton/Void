@@ -328,7 +328,7 @@ check_app_store_connect() {
 
   set +e
   local output
-  output="$(${cmd[@]} 2>&1)"
+  output="$("${cmd[@]}" 2>&1)"
   local status=$?
   set -e
 
@@ -445,7 +445,7 @@ fi
 
 if command_exists xcodebuild; then
   local_sdks="$(xcodebuild -showsdks 2>/dev/null || true)"
-  if grep -q 'iOS 26\.4' <<<"$local_sdks"; then
+  if grep -q 'iphoneos' <<<"$local_sdks"; then
     ok "Xcode reports iOS SDKs are installed."
   else
     warn "Could not confirm the expected iOS SDK install from xcodebuild -showsdks."

@@ -30,6 +30,10 @@ extension HomeReducer {
   
   func stopMeditationFlow(_ state: inout State) -> Effect<Action> {
     guard let meditationState = state.meditationState else {
+      // Even if there's no meditation state, make sure a stale timer isn't left on screen.
+      withAnimation(.spring) {
+        handleMeditationStateChange(state: &state)
+      }
       return .none
     }
     
@@ -45,12 +49,13 @@ extension HomeReducer {
 
     return .merge(
       shouldSaveMindfulnessSession
-        ? .run { _ in
+        ? .run { send in
           do {
             try await healthKitClient.saveMindfulnessSession(.init(startDate: startDate, endDate: now))
           } catch {
             print("Failed to save mindfulness session: \(error)")
           }
+          await send(.stats(.task))
         }
         : .none,
       .run { _ in
@@ -66,6 +71,10 @@ extension HomeReducer {
     
     // Play ambient sound if currently active
     return .run { [state] _ in
+      /// Keep the Live Activity in sync with restored or externally-changed
+      /// sessions that never pass through `onChange(of: \.meditationState)`.
+      await liveActivityClient.sync(state.meditationState?.elapsedTime)
+
       await audioManager.preloadSounds()
       if let ambientSound = state.settings.settings.ambience, state.isActive {
         await audioManager.setAmbient(ambientSound)

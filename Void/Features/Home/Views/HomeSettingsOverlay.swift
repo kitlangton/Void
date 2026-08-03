@@ -8,7 +8,13 @@ struct HomeSettingsOverlay: View {
   private var backgroundColor: Color { 
     colorScheme == .dark ? .black : .white 
   }
-  
+
+  /// While a sit's duration is being edited, the settings recede entirely so
+  /// the digit keyboard clearly belongs to the row above.
+  private var isEditingSit: Bool {
+    store.stats.editingSessionID != nil
+  }
+
   var body: some View {
     SettingsView(store: store.scope(state: \.settings, action: \.settings))
       .padding()
@@ -16,6 +22,10 @@ struct HomeSettingsOverlay: View {
       .background {
         backgroundGradient
       }
+      .opacity(isEditingSit ? 0 : 1)
+      .offset(y: isEditingSit ? 24 : 0)
+      .allowsHitTesting(!isEditingSit)
+      .animation(.nice, value: isEditingSit)
   }
   
   @ViewBuilder
