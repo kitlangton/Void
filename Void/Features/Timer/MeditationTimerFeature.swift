@@ -70,10 +70,17 @@ struct MeditationTimerFeature {
         state.now = now
         if state.meditationState.elapsedTime.isPaused {
           state.$meditationState.elapsedTime.withLock { $0.resume(now: now) }
-          return .none
+          return .run { _ in
+            await audioManager.setAmbientPaused(false)
+          }
         } else {
           state.$meditationState.elapsedTime.withLock { $0.pause(now: now) }
-          return .cancel(id: CancelID.timer)
+          return .merge(
+            .cancel(id: CancelID.timer),
+            .run { _ in
+              await audioManager.setAmbientPaused(true)
+            }
+          )
         }
 
       case .tick:

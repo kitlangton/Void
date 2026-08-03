@@ -85,7 +85,7 @@ struct SettingsReducer {
         return .none
 
       case .delegate:
-        return .send(.select(nil))
+        return .none
       }
     }
   }

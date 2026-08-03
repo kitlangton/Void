@@ -38,23 +38,22 @@ struct ControlSection<Content: View>: View {
           HStack {
             Image(systemName: !isEnabled ? systemImage : "\(systemImage)")
               .symbolVariant(.fill)
-              .animation(.settings, value: isEnabled)
               .foregroundStyle(isEnabled ? .pink.opacity(0.9) : Color.primary.opacity(0.4))
               .frame(width: 18)
               .padding(.trailing, 4)
               .fontWeight(.black)
 
-            if expandedMode {
-              Text(title)
-                .fontWeight(.medium)
-                .transition(.blurReplace)
-            }
+            Text(title)
+              .fontWeight(.medium)
+              .lineLimit(1)
+              .opacity(expandedMode ? 1 : 0)
+              .frame(maxWidth: expandedMode ? nil : 0, alignment: .leading)
+              .clipped()
           }
           .opacity(isEnabled ? 1 : 0.55)
 
-          if expandedMode {
-            Spacer()
-          }
+          Spacer(minLength: expandedMode ? 8 : 0)
+            .frame(maxWidth: expandedMode ? .infinity : 0)
 
           VStack {
             if let selectedValue {
@@ -63,7 +62,7 @@ struct ControlSection<Content: View>: View {
                 .contentTransition(.numericText())
                 .transition(.blurReplace.animation(.settings))
                 .foregroundStyle(.primary.opacity(0.8))
-                .font(.system(miniMode ? .callout : .body))
+                .font(.system(.body))
                 .transition(.blurReplace.animation(.settings))
 
             } else {
@@ -94,7 +93,7 @@ struct ControlSection<Content: View>: View {
     .padding(.top, isExpanded ? 2 : 0)
     .padding(.bottom, isExpanded ? 8 : 0)
     .blur(radius: otherSectionIsActive ? 1 : 0)
-    .drawingGroup()
+    .geometryGroup()
     .background {
       sectionBackground
     }

@@ -120,27 +120,29 @@ struct AnimatedLogoExample: View {
 }
 
 struct RotatingLogoView: View {
-  @State private var rotation = 0.0
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var startedAt = Date.now
 
   var isActive: Bool = true
+  var boostsOnAppear = false
 
   var body: some View {
-    LogoView(
-      color: .pink,
-      rayWidthMultiplier: 0.5,
-      rotation: .degrees(rotation)
-    )
-    .drawingGroup()
-    .task(id: isActive && !reduceMotion) {
-      if isActive && !reduceMotion {
-        withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
-          rotation = 360
-        }
-      } else {
-        withAnimation(.spring) {
-          rotation = 0
-        }
+    TimelineView(.animation(paused: !isActive || reduceMotion)) { context in
+      let elapsed = max(0, context.date.timeIntervalSince(startedAt))
+      let idleVelocity = 36.0
+      let boostVelocity = boostsOnAppear ? 324.0 : 0
+      let decayDuration = 1.15
+      let boostRotation = boostVelocity * decayDuration * (1 - exp(-elapsed / decayDuration))
+      let rotation = reduceMotion ? 18 : 18 + idleVelocity * elapsed + boostRotation
+
+      LogoView(
+        color: .pink,
+        rayWidthMultiplier: 0.5,
+        rotation: .degrees(rotation)
+      )
+      .drawingGroup()
+      .onAppear {
+        startedAt = .now
       }
     }
   }

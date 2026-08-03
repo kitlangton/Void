@@ -19,11 +19,14 @@ extension HomeReducer {
   }
   
   func startMeditationFlow(_ state: inout State) -> Effect<Action> {
+    state.settings.$expandedSection.withLock { $0 = nil }
     state.$meditationState.withLock { $0 = MeditationState(now: date.now) }
     handleMeditationStateChange(state: &state)
+    let ambientSound = state.settings.settings.ambience
     
     return .run { send in
       await audioManager.play(sound: .startBell)
+      await audioManager.setAmbient(ambientSound)
       await send(.meditationTimer(.start))
     }
   }
@@ -43,6 +46,7 @@ extension HomeReducer {
     let shouldSaveMindfulnessSession = secondsElapsed > 10
 
     withAnimation(.spring) {
+      state.settings.$expandedSection.withLock { $0 = nil }
       state.$meditationState.withLock { $0 = nil }
       handleMeditationStateChange(state: &state)
     }

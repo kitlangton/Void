@@ -4,6 +4,7 @@ import ComposableArchitecture
 struct HomeHeaderView: View {
   let store: StoreOf<HomeReducer>
   let namespace: Namespace.ID
+  @State private var boostsLogoOnAppear = false
   
   var body: some View {
     VStack(spacing: 0) {
@@ -24,13 +25,18 @@ struct HomeHeaderView: View {
           )
       }
     }
+    .onChange(of: store.isActive) { _, isActive in
+      if !isActive {
+        boostsLogoOnAppear = true
+      }
+    }
   }
   
   @ViewBuilder
   private var logoAndStats: some View {
     HStack(alignment: .top) {
       VStack(alignment: .leading, spacing: 16) {
-        RotatingLogoView()
+        RotatingLogoView(boostsOnAppear: boostsLogoOnAppear)
           .frame(width: 24, height: 24)
           .matchedGeometryEffect(id: "logo", in: namespace)
         

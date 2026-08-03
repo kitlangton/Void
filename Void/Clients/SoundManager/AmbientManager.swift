@@ -7,11 +7,21 @@ import SwiftUI
 final class AmbientManager {
   static let shared = AmbientManager()
 
+  private struct Player {
+    let node: AVAudioPlayerNode
+    let filter: AVAudioUnitEQ
+    let file: AVAudioFile
+  }
+
   private let audioSession = AVAudioSession.sharedInstance()
-  private var players: [AmbientSound: AVAudioPlayer] = [:]
+  private var engine = AVAudioEngine()
+  private var players: [AmbientSound: Player] = [:]
   private var fadeTimers: [AmbientSound: Timer] = [:]
+  private var effectTimer: Timer?
+  private var playbackGenerations: [AmbientSound: Int] = [:]
   private var currentSound: AmbientSound?
-  private var isPlaying: Bool = false
+  private var isPlaying = false
+  private var isPaused = false
 
   init() {
     activateAudioSession()
@@ -21,21 +31,19 @@ final class AmbientManager {
   }
 
   func play(_ sound: AmbientSound) {
-    // If we're already playing this sound at full volume, do nothing
+    let targetVolume: Float = isPaused ? 0.6 : 1
     if currentSound == sound,
        let player = players[sound],
-       player.isPlaying,
-       player.volume >= 0.99
+       player.node.isPlaying,
+       player.node.volume >= targetVolume - 0.01
     {
       return
     }
 
     activateAudioSession()
+    startEngine()
 
-    let previousSound = currentSound
-
-    // If this isn't the current sound, fade out the current sound
-    if let oldSound = previousSound, oldSound != sound {
+    if let oldSound = currentSound, oldSound != sound {
       fadeOut(oldSound)
     }
 
@@ -45,30 +53,29 @@ final class AmbientManager {
     if players[sound] == nil {
       loadSound(sound)
     }
-
     guard let player = players[sound] else { return }
 
-    // If the player isn't playing, start it at 0 volume
-    if !player.isPlaying {
-      player.volume = 0
-      player.play()
+    if !player.node.isPlaying {
+      player.node.volume = 0
+      let generation = (playbackGenerations[sound] ?? 0) + 1
+      playbackGenerations[sound] = generation
+      scheduleLoop(sound, generation: generation)
+      player.node.play()
     }
-    // Otherwise keep its current volume (it might be in the middle of fading out)
 
-    // Cancel any existing fade for this sound (it might be fading out)
     fadeTimers[sound]?.invalidate()
     fadeTimers[sound] = nil
-
-    // Fade in from current volume (whether it's 0 or mid-fade)
     fadeIn(sound)
     updateNowPlayingInfo(for: sound)
   }
 
   func stop() {
     isPlaying = false
+    isPaused = false
+    effectTimer?.invalidate()
+    effectTimer = nil
 
-    // Fade out all playing sounds
-    for (sound, player) in players where player.isPlaying {
+    for (sound, player) in players where player.node.isPlaying {
       fadeOut(sound)
     }
 
@@ -76,39 +83,76 @@ final class AmbientManager {
     MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
   }
 
+  func setPaused(_ paused: Bool) {
+    isPaused = paused
+    guard let currentSound, let player = players[currentSound], player.node.isPlaying else { return }
+
+    fadeTimers[currentSound]?.invalidate()
+    fadeTimers[currentSound] = nil
+    effectTimer?.invalidate()
+
+    let startVolume = player.node.volume
+    let endVolume: Float = paused ? 0.6 : 1
+    let startFrequency = player.filter.bands[0].frequency
+    let endFrequency: Float = paused ? 850 : 20_000
+    let duration: TimeInterval = 0.35
+    let stepDuration: TimeInterval = 0.02
+    let steps = Int(duration / stepDuration)
+    var currentStep = 0
+
+    effectTimer = Timer.scheduledTimer(withTimeInterval: stepDuration, repeats: true) { [weak self] timer in
+      Task { @MainActor [weak self] in
+        guard let self, let player = self.players[currentSound] else {
+          timer.invalidate()
+          return
+        }
+
+        currentStep += 1
+        let progress = min(Float(currentStep) / Float(steps), 1)
+        player.node.volume = startVolume + (endVolume - startVolume) * progress
+
+        let logFrequency = log(startFrequency) + (log(endFrequency) - log(startFrequency)) * progress
+        player.filter.bands[0].frequency = exp(logFrequency)
+
+        if currentStep >= steps {
+          timer.invalidate()
+          self.effectTimer = nil
+        }
+      }
+    }
+  }
+
   private func fadeIn(_ sound: AmbientSound) {
     guard let player = players[sound] else { return }
-
-    // let targetVolume = Float(MeditationSettings.shared.ambientVolume)
-    let targetVolume = Float(1.0)
-    fade(sound, from: player.volume, to: targetVolume)
+    fade(sound, from: player.node.volume, to: isPaused ? 0.6 : 1)
   }
 
   private func fadeOut(_ sound: AmbientSound) {
     guard let player = players[sound] else { return }
-    fade(sound, from: player.volume, to: 0) { [weak self] in
-      guard let self = self else { return }
-      player.stop()
-      // Only clear current sound if this is still the current sound
+    fade(sound, from: player.node.volume, to: 0) { [weak self] in
+      guard let self else { return }
+      self.playbackGenerations[sound, default: 0] += 1
+      player.node.stop()
       if self.currentSound == sound {
         self.currentSound = nil
       }
     }
   }
 
-  private func fade(_ sound: AmbientSound, from startVolume: Float, to endVolume: Float, completion: (() -> Void)? = nil) {
-    // Cancel any existing fade for this sound
+  private func fade(
+    _ sound: AmbientSound,
+    from startVolume: Float,
+    to endVolume: Float,
+    completion: (() -> Void)? = nil
+  ) {
     fadeTimers[sound]?.invalidate()
-
     guard players[sound] != nil else {
       completion?()
       return
     }
 
-    let duration: TimeInterval = 1.5
     let stepDuration: TimeInterval = 0.05
-    let steps = Int(duration / stepDuration)
-
+    let steps = Int(1.5 / stepDuration)
     var currentStep = 0
 
     fadeTimers[sound] = Timer.scheduledTimer(withTimeInterval: stepDuration, repeats: true) { [weak self] timer in
@@ -120,19 +164,12 @@ final class AmbientManager {
         }
 
         currentStep += 1
-        let progress = Double(currentStep) / Double(steps)
-        let newVolume = startVolume + (endVolume - startVolume) * Float(progress)
-
-        player.volume = newVolume
+        let progress = Float(currentStep) / Float(steps)
+        player.node.volume = startVolume + (endVolume - startVolume) * progress
 
         if currentStep >= steps {
           timer.invalidate()
-          fadeTimers[sound] = nil
-
-          if newVolume == 0 {
-            player.stop()
-          }
-
+          self.fadeTimers[sound] = nil
           completion?()
         }
       }
@@ -141,30 +178,33 @@ final class AmbientManager {
 
   private func activateAudioSession() {
     do {
-      try audioSession.setCategory(
-        .playback,
-        mode: .default,
-        options: [.mixWithOthers]
-      )
+      try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
       try audioSession.setActive(true)
     } catch {
       print("Failed to set up audio session: \(error)")
     }
   }
 
-  private func pauseForInterruption() {
-    for timer in fadeTimers.values {
-      timer.invalidate()
+  private func startEngine() {
+    guard !engine.isRunning else { return }
+    do {
+      try engine.start()
+    } catch {
+      print("Failed to start ambient audio engine: \(error)")
     }
-    fadeTimers.removeAll()
+  }
 
-    for player in players.values where player.isPlaying {
-      player.pause()
-    }
+  private func pauseForInterruption() {
+    fadeTimers.values.forEach { $0.invalidate() }
+    fadeTimers.removeAll()
+    effectTimer?.invalidate()
+    effectTimer = nil
+    engine.pause()
   }
 
   private func resumeCurrentSoundIfNeeded() {
     guard isPlaying, let currentSound else { return }
+    startEngine()
     play(currentSound)
   }
 
@@ -186,24 +226,49 @@ final class AmbientManager {
   }
 
   private func setupPlayers() {
-    for sound in AmbientSound.allCases {
-      loadSound(sound)
-    }
+    AmbientSound.allCases.forEach(loadSound)
+    engine.prepare()
   }
 
   private func loadSound(_ sound: AmbientSound) {
     let fileInfo = sound.fileInfo
-    guard let url = Bundle.main.url(forResource: fileInfo.fileName,
-                                    withExtension: fileInfo.fileExtension) else { return }
+    guard let url = Bundle.main.url(
+      forResource: fileInfo.fileName,
+      withExtension: fileInfo.fileExtension
+    ) else { return }
 
     do {
-      let player = try AVAudioPlayer(contentsOf: url)
-      player.numberOfLoops = -1 // Loop indefinitely
-      player.volume = 0.0 // Start muted
-      players[sound] = player
-      player.prepareToPlay()
+      let file = try AVAudioFile(forReading: url)
+      let node = AVAudioPlayerNode()
+      let filter = AVAudioUnitEQ(numberOfBands: 1)
+      let band = filter.bands[0]
+      band.filterType = .lowPass
+      band.frequency = isPaused ? 850 : 20_000
+      band.bandwidth = 0.5
+      band.bypass = false
+
+      engine.attach(node)
+      engine.attach(filter)
+      engine.connect(node, to: filter, format: file.processingFormat)
+      engine.connect(filter, to: engine.mainMixerNode, format: file.processingFormat)
+      players[sound] = Player(node: node, filter: filter, file: file)
     } catch {
       print("Error loading ambient sound: \(error)")
+    }
+  }
+
+  private func scheduleLoop(_ sound: AmbientSound, generation: Int) {
+    guard let player = players[sound], playbackGenerations[sound] == generation else { return }
+    player.node.scheduleSegment(
+      player.file,
+      startingFrame: 0,
+      frameCount: AVAudioFrameCount(player.file.length),
+      at: nil,
+      completionCallbackType: .dataConsumed
+    ) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        self?.scheduleLoop(sound, generation: generation)
+      }
     }
   }
 
@@ -224,14 +289,12 @@ final class AmbientManager {
       name: AVAudioSession.interruptionNotification,
       object: nil
     )
-
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleRouteChange),
       name: AVAudioSession.routeChangeNotification,
       object: nil
     )
-
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleMediaServicesReset),
@@ -244,24 +307,16 @@ final class AmbientManager {
     guard let userInfo = notification.userInfo,
           let typeValue = userInfo[AVAudioSessionInterruptionTypeKey] as? UInt,
           let type = AVAudioSession.InterruptionType(rawValue: typeValue)
-    else {
-      return
-    }
+    else { return }
 
     switch type {
     case .began:
-      // Preserve the selected sound so it can be restarted when the interruption ends.
       pauseForInterruption()
     case .ended:
       activateAudioSession()
-
-      guard let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
-        resumeCurrentSoundIfNeeded()
-        return
-      }
-
-      let options = AVAudioSession.InterruptionOptions(rawValue: optionsValue)
-      if options.contains(.shouldResume) {
+      let optionsValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt
+      let options = optionsValue.map(AVAudioSession.InterruptionOptions.init(rawValue:))
+      if options?.contains(.shouldResume) != false {
         resumeCurrentSoundIfNeeded()
       }
     @unknown default:
@@ -272,29 +327,21 @@ final class AmbientManager {
   @objc private func handleRouteChange(notification: Notification) {
     guard let userInfo = notification.userInfo,
           let reasonValue = userInfo[AVAudioSessionRouteChangeReasonKey] as? UInt,
-          let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue)
-    else {
-      return
-    }
+          AVAudioSession.RouteChangeReason(rawValue: reasonValue) == .oldDeviceUnavailable
+    else { return }
 
-    // Handle route changes (e.g., headphones disconnected)
-    switch reason {
-    case .oldDeviceUnavailable:
-      activateAudioSession()
-      resumeCurrentSoundIfNeeded()
-    default:
-      break
-    }
+    activateAudioSession()
+    resumeCurrentSoundIfNeeded()
   }
 
   @objc private func handleMediaServicesReset() {
-    // AVAudioPlayers become invalid after a media services reset and must be recreated.
-    for timer in fadeTimers.values {
-      timer.invalidate()
-    }
+    fadeTimers.values.forEach { $0.invalidate() }
     fadeTimers.removeAll()
-
+    effectTimer?.invalidate()
+    effectTimer = nil
+    playbackGenerations.removeAll()
     players.removeAll()
+    engine = AVAudioEngine()
 
     activateAudioSession()
     setupPlayers()

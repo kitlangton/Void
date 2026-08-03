@@ -102,8 +102,6 @@ struct HomeView: View {
   
   @Environment(\.scenePhase) private var scenePhase
   @Namespace private var namespace
-  @State private var pulseTrigger = 0
-  @State private var downPulseTrigger = 0
 
   var body: some View {
     contentView
@@ -149,9 +147,7 @@ struct HomeView: View {
     case .granted:
       HomeContentView(
         store: store,
-        namespace: namespace,
-        pulseTrigger: $pulseTrigger,
-        downPulseTrigger: $downPulseTrigger
+        namespace: namespace
       )
       .transition(.blurReplace)
     }

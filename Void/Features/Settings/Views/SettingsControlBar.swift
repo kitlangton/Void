@@ -18,18 +18,16 @@ struct SettingsControlBar: View {
   private var actionButton: some View {
     HStack(alignment: .bottom, spacing: 24) {
       Button {
-        Task {
-          if store.isActive {
-            store.send(.delegate(.stopMeditation), animation: .spring)
-          } else {
-            store.send(.delegate(.startMeditation), animation: .spring)
-          }
+        if store.isActive {
+          store.send(.delegate(.stopMeditation), animation: .spring)
+        } else {
+          store.send(.delegate(.startMeditation), animation: .spring)
         }
       } label: {
         HStack {
           Text(store.isActive ? "Finish" : "Begin")
-            .contentTransition(.numericText(countsDown: false))
-            .transition(.blurReplace.combined(with: .move(edge: .leading)))
+            .frame(width: 48, alignment: .trailing)
+            .contentTransition(.interpolate)
         }
         .contentShape(.rect)
         .bold()
