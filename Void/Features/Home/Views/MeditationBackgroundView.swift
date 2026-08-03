@@ -16,7 +16,7 @@ struct MeditationBackgroundView: View {
     Color.clear
       .contentShape(.rect)
       .onTapGesture {
-        store.send(.settings(.select(nil)), animation: .nice)
+        store.send(.settings(.select(nil)), animation: .settings)
       }
       .allowsHitTesting(store.settings.expandedSection != nil)
   }

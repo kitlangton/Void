@@ -17,7 +17,7 @@ struct TimerSectionView: View {
       selectedValue: store.settings.durationMinutes.map { "\($0)m" },
       isExpanded: isExpanded,
       onExpandedChange: { expanded in
-        store.send(.select(expanded ? .timer : nil), animation: .nice)
+        store.send(.select(expanded ? .timer : nil), animation: .settings)
       },
       otherSectionIsActive: otherSectionIsActive,
       miniMode: miniMode
@@ -46,7 +46,7 @@ struct TimerSectionView: View {
       unit: "minute",
       handleDismiss: {
         showingCustomDurationSheet = false
-        store.send(.select(nil), animation: .nice)
+        store.send(.select(nil), animation: .settings)
       }
     )
     .padding(.leading, 20)

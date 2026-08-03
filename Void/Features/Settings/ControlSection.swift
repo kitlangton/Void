@@ -38,7 +38,7 @@ struct ControlSection<Content: View>: View {
           HStack {
             Image(systemName: !isEnabled ? systemImage : "\(systemImage)")
               .symbolVariant(.fill)
-              .animation(.nice, value: isEnabled)
+              .animation(.settings, value: isEnabled)
               .foregroundStyle(isEnabled ? .pink.opacity(0.9) : Color.primary.opacity(0.4))
               .frame(width: 18)
               .padding(.trailing, 4)
@@ -61,17 +61,17 @@ struct ControlSection<Content: View>: View {
               Text(selectedValue)
                 .lineLimit(1)
                 .contentTransition(.numericText())
-                .transition(.blurReplace.animation(.nice))
+                .transition(.blurReplace.animation(.settings))
                 .foregroundStyle(.primary.opacity(0.8))
                 .font(.system(miniMode ? .callout : .body))
-                .transition(.blurReplace.animation(.nice))
+                .transition(.blurReplace.animation(.settings))
 
             } else {
               VStack {
                 Text(title == "Timer" ? "∞" : "—")
                   .fontWeight(.bold)
                   .foregroundStyle(.tertiary)
-                  .transition(.blurReplace.animation(.nice))
+                  .transition(.blurReplace.animation(.settings))
               }
               .frame(width: 16)
             }
@@ -88,7 +88,7 @@ struct ControlSection<Content: View>: View {
         content
           .padding(.horizontal, 12)
           .padding(.top, 12)
-          .transition(.opacity.combined(with: .blurReplace).animation(.nice))
+          .transition(.opacity.combined(with: .blurReplace).animation(.settings))
       }
     }
     .padding(.top, isExpanded ? 2 : 0)

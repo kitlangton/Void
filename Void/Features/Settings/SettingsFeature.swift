@@ -165,7 +165,7 @@ struct SettingsView: View {
     Color.clear
       .contentShape(.rect)
       .onTapGesture {
-        store.send(.select(nil), animation: .nice)
+        store.send(.select(nil), animation: .settings)
       }
   }
 

@@ -73,7 +73,12 @@ struct HomeReducer {
       case .onAppear:
         return onAppearFlow(&state)
 
-      case .meditationTimer, .stats, .settings, .onboarding:
+      case .settings:
+        state.stats.isTodayExpanded = false
+        state.stats.pendingDeletionID = nil
+        return .none
+
+      case .meditationTimer, .stats, .onboarding:
         return .none
       }
     }

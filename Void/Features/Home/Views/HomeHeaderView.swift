@@ -12,6 +12,11 @@ struct HomeHeaderView: View {
         QuotesView()
           .opacity(store.stats.isTodayExpanded ? 0.25 : 1)
           .animation(.nice, value: store.stats.isTodayExpanded)
+          .onTapGesture {
+            if store.stats.isTodayExpanded {
+              store.send(.stats(.dismissTodayExpansion), animation: .nice)
+            }
+          }
           .transition(
             AnimationConstants.Transition.blurReplace.combined(
               with: .move(edge: .top)

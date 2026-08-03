@@ -9,4 +9,5 @@ import SwiftUI
 
 extension Animation {
   static let nice: Animation = .spring(duration: 0.4)
+  static let settings: Animation = .spring(duration: 0.28)
 }

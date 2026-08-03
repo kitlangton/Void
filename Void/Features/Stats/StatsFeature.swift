@@ -13,6 +13,7 @@ struct StatsFeature {
     var selectedDaySessions: [MindfulSessionSample] = []
     var editingSessionID: UUID?
     var editedMinutes: Int?
+    var pendingDeletionID: UUID?
 
     func session(id: UUID) -> MindfulSessionSample? {
       todaysSessions.first(where: { $0.id == id })
@@ -27,6 +28,7 @@ struct StatsFeature {
     case updateTodaysSessions([MindfulSessionSample])
     case updateSelectedDaySessions(Date, [MindfulSessionSample])
     case toggleTodayExpanded
+    case dismissTodayExpansion
     case selectDay(Date?)
     case deleteSession(UUID)
     case beginEditingSession(UUID)
@@ -73,12 +75,21 @@ struct StatsFeature {
         state.isTodayExpanded.toggle()
         state.editingSessionID = nil
         state.editedMinutes = nil
+        state.pendingDeletionID = nil
         guard state.isTodayExpanded else { return .none }
         return refreshTodayEffect()
+
+      case .dismissTodayExpansion:
+        state.isTodayExpanded = false
+        state.editingSessionID = nil
+        state.editedMinutes = nil
+        state.pendingDeletionID = nil
+        return .none
 
       case let .selectDay(day):
         state.editingSessionID = nil
         state.editedMinutes = nil
+        state.pendingDeletionID = nil
 
         if let day, state.selectedDay != day {
           state.selectedDay = day
@@ -91,6 +102,14 @@ struct StatsFeature {
         }
 
       case let .deleteSession(id):
+        guard state.pendingDeletionID == id else {
+          state.pendingDeletionID = id
+          state.editingSessionID = nil
+          state.editedMinutes = nil
+          return .none
+        }
+
+        state.pendingDeletionID = nil
         state.todaysSessions.removeAll { $0.id == id }
         state.selectedDaySessions.removeAll { $0.id == id }
         return .run { [selectedDay = state.selectedDay] send in
@@ -109,6 +128,7 @@ struct StatsFeature {
         else { return .none }
         state.editingSessionID = id
         state.editedMinutes = max(1, session.minutes)
+        state.pendingDeletionID = nil
         return .none
 
       case .commitEdit:
@@ -367,17 +387,26 @@ struct MindfulSessionRows: View {
       Spacer()
 
       if session.isEditable {
+        let isPendingDeletion = store.pendingDeletionID == session.id
+
         Button {
           store.send(.deleteSession(session.id), animation: .nice)
         } label: {
-          Image(systemName: "xmark")
+          Group {
+            if isPendingDeletion {
+              Text("delete?")
+            } else {
+              Image(systemName: "xmark")
+            }
+          }
             .font(.caption.bold())
-            .foregroundStyle(.secondary.opacity(0.7))
+            .foregroundStyle(isPendingDeletion ? Color.red : Color.secondary.opacity(0.7))
             .padding(8)
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
         .padding(-8)
+        .animation(.nice, value: isPendingDeletion)
       }
     }
     .font(.system(.subheadline).weight(.medium))

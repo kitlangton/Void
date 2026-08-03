@@ -16,7 +16,7 @@ struct AmbienceSectionView: View {
       selectedValue: store.settings.ambience?.title,
       isExpanded: isExpanded,
       onExpandedChange: { expanded in
-        store.send(.select(expanded ? .ambient : nil), animation: .nice)
+        store.send(.select(expanded ? .ambient : nil), animation: .settings)
       },
       otherSectionIsActive: otherSectionIsActive,
       miniMode: miniMode

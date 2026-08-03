@@ -25,7 +25,7 @@ struct IntervalsSectionView: View {
       selectedValue: store.settings.intervalMinutes.map { "\($0)m" },
       isExpanded: isExpanded,
       onExpandedChange: { expanded in
-        store.send(.select(expanded ? .intervals : nil), animation: .nice)
+        store.send(.select(expanded ? .intervals : nil), animation: .settings)
       },
       otherSectionIsActive: otherSectionIsActive,
       miniMode: miniMode
@@ -82,7 +82,7 @@ struct IntervalsSectionView: View {
       unit: "minute",
       handleDismiss: {
         showingCustomIntervalSheet = false
-        store.send(.select(nil), animation: .nice)
+        store.send(.select(nil), animation: .settings)
       }
     )
     .padding(.leading, 20)

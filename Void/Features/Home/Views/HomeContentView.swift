@@ -24,6 +24,11 @@ struct HomeContentView: View {
           downPulseTrigger += 1
         }
       }
+      .onChange(of: selectedPage) {
+        if selectedPage != 0, store.stats.isTodayExpanded {
+          store.send(.stats(.dismissTodayExpansion), animation: .nice)
+        }
+      }
       .pulsing(pulseTrigger)
       .pulsing(downPulseTrigger, direction: .down)
   }
@@ -73,6 +78,12 @@ struct HomeMainPageView: View {
     }
     .background {
       MeditationBackgroundView(store: store)
+        .contentShape(.rect)
+        .onTapGesture {
+          if store.stats.isTodayExpanded {
+            store.send(.stats(.dismissTodayExpansion), animation: .nice)
+          }
+        }
     }
   }
 
@@ -82,7 +93,7 @@ struct HomeMainPageView: View {
       .opacity(store.settings.expandedSection != nil ? AnimationConstants.Opacity.dimOverlay : AnimationConstants.Opacity.hidden)
       .contentShape(.rect)
       .onTapGesture {
-        store.send(.settings(.select(nil)), animation: .nice)
+        store.send(.settings(.select(nil)), animation: .settings)
       }
       .allowsHitTesting(store.settings.expandedSection != nil)
   }
